@@ -47,7 +47,7 @@ npx expo start
 #Hoặc bằng yarn
 
 ```bash
-git clone https://github.com/ten-cua-ban/note-app.git
+[git clone https://github.com/Quytaki/Noteapp.git]
 cd note-app
 yarn install
 npx expo start
