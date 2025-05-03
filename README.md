@@ -23,7 +23,12 @@
 - 🌙 **Dark Mode**: Giao diện tối theo cài đặt hệ thống (chưa tích hợp hoàn chỉnh)
 - 📌 **Ghim ghi chú quan trọng**: Ghi chú sẽ hiển thị lên đầu danh sách
 - 🧭 **Tách màn hình (Navigation)**: Chuyển giữa các màn hình bằng điều hướng rõ ràng hơn
-
+- ❌ Đồng bộ dữ liệu với Firebase (Realtime Database hoặc Firebase Storage)
+- ❌ Đăng nhập với Firebase Authentication
+- ❌ Hiển thị và cập nhật danh sách ghi chú qua `FlatList`
+- ❌ Custom Hook để tái sử dụng logic (ví dụ: quản lý ghi chú, đăng nhập, tải ảnh)
+- ❌ Upload và hiển thị hình ảnh từ Firebase Storage
+- ❌ Sử dụng Redux Toolkit để quản lý trạng thái (không bắt buộc)
 
 
 ## 📌 Các thư viện đang sử dụng
