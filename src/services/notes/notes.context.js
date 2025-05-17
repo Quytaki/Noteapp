@@ -1,115 +1,76 @@
-import React, { createContext, useState, useEffect, useCallback } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import React, { createContext, useState, useEffect } from "react";
+import { auth } from "../auth/firebase";
+import { onAuthStateChanged } from "firebase/auth";
+import { getDatabase, ref, set, onValue, remove } from "firebase/database";
 
 export const NotesContext = createContext();
 
 export const NotesContextProvider = ({ children }) => {
   const [notes, setNotes] = useState([]);
-  const [keyword, setKeyword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [submittedKeyword, setSubmittedKeyword] = useState("");
+  const [user, setUser] = useState(null);
 
-  const onSearch = useCallback((searchKeyword) => {
-    setIsLoading(true);
-    setKeyword(searchKeyword);
-    setSubmittedKeyword(searchKeyword);
+  // Theo dõi đăng nhập
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (u) => {
+      setUser(u);
+    });
+    return unsubscribe;
   }, []);
 
+  // Load notes từ Realtime Database khi user thay đổi
   useEffect(() => {
-    getNotes();
-  }, [getNotes, submittedKeyword]);
-
-  const getNotes = async () => {
-    try {
-      const keys = await AsyncStorage.getAllKeys();
-      const notes = await AsyncStorage.multiGet(keys);
-      let parsedNotes = notes.map((note) => JSON.parse(note[1]));
-
-      if (submittedKeyword) {
-        parsedNotes = parsedNotes.filter(
-          (note) =>
-            note.title.toLowerCase().includes(submittedKeyword.toLowerCase()) ||
-            note.content.toLowerCase().includes(submittedKeyword.toLowerCase())
-        );
+    if (!user) {
+      setNotes([]);
+      return;
+    }
+    const db = getDatabase();
+    const notesRef = ref(db, `notes/${user.uid}`);
+    const unsubscribe = onValue(notesRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        // Chuyển object thành array
+        const arr = Object.values(data).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+        setNotes(arr);
+      } else {
+        setNotes([]);
       }
+    });
+    return () => unsubscribe();
+  }, [user]);
 
-      // Sort the notes by date recency
-      parsedNotes.sort((a, b) => {
-        const dateA = new Date(a.date);
-        const dateB = new Date(b.date);
-        return dateB - dateA;
-      });
-
-      setNotes(parsedNotes);
-      console.log("returning getNotes", parsedNotes);
-      setIsLoading(false);
-      return parsedNotes;
-    } catch (e) {
-      console.log("error retrieving all notes", e);
-      setIsLoading(false);
-    }
-  };
-
-  const getNote = async (id) => {
-    setIsLoading(true);
-    try {
-      const noteData = await AsyncStorage.getItem(`@note-${id}`);
-      console.log("note data retrieved");
-      setIsLoading(false);
-      return JSON.parse(noteData);
-    } catch (error) {
-      console.log("error retrieving note data", error);
-      setIsLoading(false);
-      return null;
-    }
-  };
-
+  // Thêm ghi chú
   const addNote = async (note) => {
-    const newNotes = [...notes, note];
-    setNotes(newNotes);
-    try {
-      await AsyncStorage.setItem(`@note-${note.id}`, JSON.stringify(note));
-      console.log("note added");
-    } catch (e) {
-      console.log("error adding note", e);
-    }
+    if (!user) return;
+    const db = getDatabase();
+    const noteRef = ref(db, `notes/${user.uid}/${note.id}`);
+    await set(noteRef, note);
+    // Không cần setNotes ở đây vì onValue sẽ tự cập nhật
   };
 
-  const removeNote = async (id) => {
-    const newNotes = notes.filter((note) => note.id !== id);
-    setNotes(newNotes);
-    try {
-      await AsyncStorage.removeItem(`@note-${id}`);
-    } catch (e) {
-      console.log("error removing note", e);
-    }
+  // Xoá ghi chú
+  const deleteNote = async (id) => {
+    if (!user) return;
+    const db = getDatabase();
+    const noteRef = ref(db, `notes/${user.uid}/${id}`);
+    await remove(noteRef);
   };
-  const updateNote = async (note) => {
-    console.log("new note data:", note);
-    const noteIndex = notes.findIndex((n) => n.id === note.id);
-    if (noteIndex !== -1) {
-      const updatedNotes = [...notes];
-      updatedNotes[noteIndex] = note;
-      setNotes(updatedNotes);
-      console.log("note updated", notes);
 
-      await AsyncStorage.setItem(`@note-${note.id}`, JSON.stringify(note));
-      console.log("note updated");
-    }
+  // Sửa ghi chú
+  const updateNote = async (updatedNote) => {
+    if (!user) return;
+    const db = getDatabase();
+    const noteRef = ref(db, `notes/${user.uid}/${updatedNote.id}`);
+    await set(noteRef, updatedNote);
   };
 
   return (
     <NotesContext.Provider
       value={{
         notes,
-        getNotes: getNotes,
-        getNote: getNote,
-        addNote: addNote,
-        removeNote: (id) => removeNote(id),
-        updateNote: (note) => updateNote(note),
-        search: onSearch,
-        keyword,
-        isLoading,
+        addNote,
+        deleteNote,
+        updateNote,
+        user,
       }}
     >
       {children}

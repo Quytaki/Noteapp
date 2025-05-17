@@ -1,14 +1,21 @@
 import { colors } from "./colors";
-import { space, lineHeights } from "./spacing";
-import { sizes } from "./sizes";
-import { fonts, fontWeights, fontSizes } from "./fonts";
 
 export const theme = {
-  colors,
-  space,
-  lineHeights,
-  sizes,
-  fonts,
-  fontSizes,
-  fontWeights,
+  colors: {
+    ...colors,
+    bg: {
+      primary: "#fff",
+    },
+    text: {
+      primary: "#222",
+      secondary: "#555",
+      disabled: "#aaa",
+      error: "tomato",
+      link: "tomato",
+    },
+    ui: {
+      primary: "#f5f5f5",
+      secondary: "#e0e0e0",
+    },
+  },
 };

@@ -46,7 +46,7 @@ export const EditNoteScreen = ({ route, navigation }) => {
     getNote,
     updateNote,
     addNote,
-    removeNote,
+    deleteNote,
     isLoading,
   } = useContext(NotesContext);
 
@@ -105,18 +105,18 @@ export const EditNoteScreen = ({ route, navigation }) => {
     if (title == "" && content == "") {
       console.log("removing note");
       if (!newNote) {
-        removeNote(id);
+        deleteNote(id); // Xoá trên realtime database
       }
     } else {
       if (newNote) {
-        addNote({ id, title, content, date: new Date(Date.now()) });
+        addNote({ id, title, content, createdAt: new Date().toISOString() }); // Thêm lên realtime database
       } else {
         updateNote({
           id,
           title,
           content,
-          date: new Date(Date.now()),
-        });
+          createdAt: new Date().toISOString(),
+        }); // Sửa trên realtime database
       }
     }
   };

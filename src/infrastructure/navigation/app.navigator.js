@@ -4,7 +4,13 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { NotesNavigator } from "./notes.navigator";
 import { SettingsNavigator } from "./settings.navigator";
 import { NotesContextProvider } from "../../services/notes/notes.context";
+import { createStackNavigator } from "@react-navigation/stack";
+import { LoginScreen } from "../../features/auth/screens/login.screen";
+import { RegisterScreen } from "../../features/auth/screens/register.screen";
+
 const Tab = createBottomTabNavigator();
+const RootStack = createStackNavigator();
+
 const TAB_ICONS = {
   Notes: [Ionicons, "list"],
   Settings: [Ionicons, "settings"],
@@ -33,16 +39,28 @@ const createScreenOptions = ({ route }) => {
   };
 };
 
+const MainTabs = ({ route }) => {
+  // Lấy tên tab mặc định từ params nếu có
+  const initialTab = route?.params?.screen || "Notes";
+  return (
+    <Tab.Navigator
+      initialRouteName={initialTab}
+      screenOptions={createScreenOptions}
+    >
+      <Tab.Screen name="Notes" component={NotesNavigator} />
+      <Tab.Screen name="Settings" component={SettingsNavigator} />
+    </Tab.Navigator>
+  );
+};
+
 export const AppNavigator = () => {
   return (
     <NotesContextProvider>
-      <Tab.Navigator
-        initialRouteName="Notes"
-        screenOptions={createScreenOptions}
-      >
-        <Tab.Screen name="Notes" component={NotesNavigator} />
-        <Tab.Screen name="Settings" component={SettingsNavigator} />
-      </Tab.Navigator>
+      <RootStack.Navigator screenOptions={{ headerShown: false }}>
+        <RootStack.Screen name="Login" component={LoginScreen} />
+        <RootStack.Screen name="Register" component={RegisterScreen} />
+        <RootStack.Screen name="MainTabs" component={MainTabs} />
+      </RootStack.Navigator>
     </NotesContextProvider>
   );
 };

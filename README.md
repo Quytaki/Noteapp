@@ -7,29 +7,28 @@
 ## ⚙️ Tính năng đã hoàn thành
 
 - 🖊️ Thêm ghi chú với tiêu đề và nội dung
-- 💾 Lưu trữ ghi chú cục bộ bằng `AsyncStorage`
 - 📄 Hiển thị danh sách các ghi chú đã tạo
 - 🗑️ Xoá ghi chú
 - ✏️ Chỉnh sửa ghi chú
 - 🕒 Hiển thị thời gian tạo
-- 🔍 Tìm kiếm ghi chú theo tiêu đề hoặc nội dung
+- ⚙️ Màn hình cài đặt (Settings): Đã có SettingsScreen với đổi chủ đề (Dark/Light), chọn màu chủ đề, đăng xuất.
+- 🌙 Dark Mode: Đã có hỗ trợ đổi theme dark/light qua ThemeContext, chuyển đổi trong Settings.
+- 🧭 Tách màn hình (Navigation): Đã có navigation rõ ràng với nhiều stack/tab navigator (AppNavigator).
+- 🔑 Đăng nhập với Firebase Authentication
+- 📅 Hiển thị thời gian tạo ghi chú
+- 📄 Hiển thị và cập nhật danh sách ghi chú qua FlatList: Đã có sử dụng FlatList trong NotesScreen.
+- 📸 Upload và hiển thị hình ảnh từ Firebase Realtime Database
+- 📸 Đồng bộ dữ liệu với Firebase (Realtime Database)
+- ☁️ **Đồng bộ Firebase**: Lưu và đồng bộ ghi chú online
+
 
 ---
 
 ### 🚧 Tính năng đang phát triển
-
-- ⚙️ **Màn hình cài đặt (Settings)**: Tùy chọn thay đổi chủ đề (Dark/Light), xoá toàn bộ dữ liệu, đồng bộ đám mây,...
-- ☁️ **Đồng bộ Firebase**: Lưu và đồng bộ ghi chú online
-- 🌙 **Dark Mode**: Giao diện tối theo cài đặt hệ thống (chưa tích hợp hoàn chỉnh)
 - 📌 **Ghim ghi chú quan trọng**: Ghi chú sẽ hiển thị lên đầu danh sách
-- 🧭 **Tách màn hình (Navigation)**: Chuyển giữa các màn hình bằng điều hướng rõ ràng hơn
-- ❌ Đồng bộ dữ liệu với Firebase (Realtime Database hoặc Firebase Storage)
-- ❌ Đăng nhập với Firebase Authentication
-- ❌ Hiển thị và cập nhật danh sách ghi chú qua `FlatList`
 - ❌ Custom Hook để tái sử dụng logic (ví dụ: quản lý ghi chú, đăng nhập, tải ảnh)
-- ❌ Upload và hiển thị hình ảnh từ Firebase Storage
 - ❌ Sử dụng Redux Toolkit để quản lý trạng thái (không bắt buộc)
-
+- 🔍 Tìm kiếm ghi chú theo tiêu đề hoặc nội dung
 
 ## 📌 Các thư viện đang sử dụng
 

@@ -1,37 +1,11 @@
-import React, { useEffect } from "react";
+import React from "react";
+import { createStackNavigator } from "@react-navigation/stack";
+import { SettingsScreen } from "../../features/settings/screens/settings.screen";
 
-import {
-  createStackNavigator,
-  CardStyleInterpolators,
-} from "@react-navigation/stack";
+const SettingsStack = createStackNavigator();
 
-const SettingStack = createStackNavigator();
-
-const FavouritesScreen = () => {
-  return null;
-};
-const SettingsScreen = () => {
-  return null;
-};
-export const SettingsNavigator = ({ route, navigation }) => {
-  return (
-    <SettingStack.Navigator
-      screenOptions={{
-        headerShown: true,
-        headermode: "screen",
-        cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
-      }}
-    >
-      <SettingStack.Screen
-        name="SettingsScreen"
-        component={SettingsScreen}
-        options={{ header: () => null }}
-      />
-      <SettingStack.Screen
-        name="Favourites"
-        component={FavouritesScreen}
-        options={{ header: () => null }}
-      />
-    </SettingStack.Navigator>
-  );
-};
+export const SettingsNavigator = () => (
+  <SettingsStack.Navigator screenOptions={{ headerShown: false }}>
+    <SettingsStack.Screen name="SettingsMain" component={SettingsScreen} />
+  </SettingsStack.Navigator>
+);

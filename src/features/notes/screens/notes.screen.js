@@ -1,276 +1,356 @@
-import React, { useContext, useState, useEffect } from "react";
-import { StyleSheet } from "react-native";
-import { Text, View } from "react-native";
-import { Button, Card, Title, Paragraph, FAB } from "react-native-paper";
-import { TouchableOpacity } from "react-native-gesture-handler";
-import styled from "styled-components/native";
-import { useTheme } from "styled-components";
+import React, { useContext, useState } from "react";
+import { View, Text, TextInput, TouchableOpacity, FlatList, Modal, Alert, Image } from "react-native";
+import styled, { useTheme } from "styled-components/native";
+import * as ImagePicker from "expo-image-picker";
 import { SafeArea } from "../../../components/utility/safe-area.component";
-import { Search } from "../components/search.component";
-import { Spacer } from "../../../components/spacer/spacer.component";
-import { FlatGrid } from "react-native-super-grid";
-import MasonryList from "@react-native-seoul/masonry-list";
-import { NoteCard } from "../components/note-card.component";
 import { NotesContext } from "../../../services/notes/notes.context";
-import { formatDate } from "../../../infrastructure/utility/formatDate";
-import { Ionicons } from "@expo/vector-icons";
-import "react-native-get-random-values";
-import { v4 as uuidv4 } from "uuid";
-
-const Loading = styled.ActivityIndicator`
-  flex: 1;
-`;
+import uuid from "uuid-random";
 
 const Container = styled.View`
   flex: 1;
-`;
-
-const SearchContainer = styled.View`
-  z-index: 999;
-  flex: 0.15;
-  width: 100%;
-`;
-const BottomBar = styled.View`
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
+  padding: 16px;
   background-color: ${(props) => props.theme.colors.bg.primary};
-  border-top-width: 1px;
-  border-top-color: ${(props) => props.theme.colors.ui.secondary};
-  padding-vertical: 8px;
 `;
 
-const TopBar = styled.View`
-  flex-direction: row;
-  justify-content: space-between;
+const Input = styled.TextInput`
+  border-width: 1px;
+  border-color: #ccc;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 12px;
+  background-color: ${(props) => props.theme.colors.ui.primary};
+  color: ${(props) => props.theme.colors.text.primary};
+`;
+
+const SaveButton = styled.TouchableOpacity`
+  background-color: tomato;
+  padding: 12px;
+  border-radius: 8px;
   align-items: center;
-  background-color: ${(props) => props.theme.colors.bg.primary};
-  border-bottom-width: 1px;
-  border-bottom-color: ${(props) => props.theme.colors.ui.secondary};
-  padding-vertical: 8px;
-  padding-horizontal: 16px;
+  margin-bottom: 16px;
 `;
 
-export const NotesScreen = ({ navigation }) => {
+const SaveButtonText = styled.Text`
+  color: white;
+  font-weight: bold;
+  font-size: 16px;
+`;
+
+const NoteItem = styled.View`
+  background-color: ${(props) => props.theme.colors.ui.primary};
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 10px;
+`;
+
+const ImagePreview = styled.Image`
+  width: 80px;
+  height: 80px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  margin-right: 8px;
+  background-color: #222;
+`;
+
+const NoteItemImage = styled.Image`
+  width: 60px;
+  height: 60px;
+  border-radius: 8px;
+  margin-right: 8px;
+  background-color: #222;
+`;
+
+const getBase64FromUri = async (uri) => {
+  return await new Promise((resolve, reject) => {
+    import("expo-file-system").then(FileSystem => {
+      FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 })
+        .then(resolve)
+        .catch(reject);
+    });
+  });
+};
+
+export const NotesScreen = () => {
   const theme = useTheme();
-  const { notes, updateNote, addNote, removeNote, isLoading, keyword } =
-    useContext(NotesContext);
-  const [gridKey, setGridKey] = useState(0);
+  const { notes, addNote, updateNote, deleteNote } = useContext(NotesContext);
 
-  // Add the useState hooks for selectionMode and selectedNotes
-  const [selectionMode, setSelectionMode] = useState(false);
-  const [selectedNotes, setSelectedNotes] = useState([]);
-  const [allNotesSelected, setAllNotesSelected] = useState(false);
-  // Functions to handle selection mode and note selection
-  const toggleSelectionMode = () => {
-    setSelectionMode(!selectionMode);
-    setSelectedNotes([]); // Clear selected notes when exiting selection mode
-  };
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
+  const [image, setImage] = useState(null);
+  const [error, setError] = useState("");
+  const [isConverting, setIsConverting] = useState(false);
 
-  const toggleNoteSelection = (noteId) => {
-    if (selectedNotes.includes(noteId)) {
-      setSelectedNotes(selectedNotes.filter((id) => id !== noteId));
-    } else {
-      setSelectedNotes([...selectedNotes, noteId]);
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [editNoteId, setEditNoteId] = useState(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editContent, setEditContent] = useState("");
+  const [editImage, setEditImage] = useState(null);
+  const [editIsConverting, setEditIsConverting] = useState(false);
+
+  const pickImage = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.7,
+      base64: false,
+    });
+    if (!result.canceled && result.assets && result.assets[0]?.uri) {
+      setIsConverting(true);
+      setImage(null);
+      try {
+        const base64 = await getBase64FromUri(result.assets[0].uri);
+        setImage(base64);
+      } catch (e) {
+        setImage(null);
+        Alert.alert("Lỗi", "Chuyển đổi ảnh thất bại.");
+      }
+      setIsConverting(false);
     }
   };
 
-  // Function to delete all selected notes
-  const deleteSelectedNotes = () => {
-    selectedNotes.forEach((noteId) => removeNote(noteId));
-    toggleSelectionMode();
-  };
-
-  // Function to select all notes
-  const selectAllNotes = () => {
-    if (allNotesSelected) {
-      setSelectedNotes([]);
-    } else {
-      setSelectedNotes(notes.map((note) => note.id));
+  const pickEditImage = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.7,
+      base64: false,
+    });
+    if (!result.canceled && result.assets && result.assets[0]?.uri) {
+      setEditIsConverting(true);
+      setEditImage(null);
+      try {
+        const base64 = await getBase64FromUri(result.assets[0].uri);
+        setEditImage(base64);
+      } catch (e) {
+        setEditImage(null);
+        Alert.alert("Lỗi", "Chuyển đổi ảnh thất bại.");
+      }
+      setEditIsConverting(false);
     }
-    setAllNotesSelected(!allNotesSelected);
   };
 
-  useEffect(() => {
-    setGridKey((prevKey) => prevKey + 1);
-  }, [notes]);
+  const handleSave = async () => {
+    if (isConverting) return;
+    if (!title.trim() && !content.trim()) {
+      setError("Vui lòng nhập tiêu đề hoặc nội dung.");
+      return;
+    }
+    setError("");
+    await addNote({
+      id: uuid(),
+      title,
+      content,
+      image,
+      createdAt: new Date().toISOString(),
+    });
+    setTitle("");
+    setContent("");
+    setImage(null);
+  };
+
+  const openEditModal = (note) => {
+    setEditNoteId(note.id);
+    setEditTitle(note.title);
+    setEditContent(note.content);
+    setEditImage(note.image || null);
+    setEditModalVisible(true);
+  };
+
+  const handleEditSave = async () => {
+    if (editIsConverting) return;
+    if (!editTitle.trim() && !editContent.trim()) {
+      Alert.alert("Lỗi", "Vui lòng nhập tiêu đề hoặc nội dung.");
+      return;
+    }
+    await updateNote({
+      id: editNoteId,
+      title: editTitle,
+      content: editContent,
+      image: editImage,
+      createdAt: new Date().toISOString(),
+    });
+    setEditModalVisible(false);
+  };
+
+  const handleDelete = async () => {
+    Alert.alert(
+      "Xác nhận xoá",
+      "Bạn có chắc muốn xoá ghi chú này?",
+      [
+        { text: "Huỷ", style: "cancel" },
+        {
+          text: "Xoá",
+          style: "destructive",
+          onPress: async () => {
+            await deleteNote(editNoteId);
+            setEditModalVisible(false);
+          },
+        },
+      ],
+      { cancelable: true }
+    );
+  };
 
   return (
     <SafeArea>
-      {selectionMode && (
-        <TopBar>
-          <TouchableOpacity onPress={toggleSelectionMode}>
-            <Ionicons
-              name="close"
-              size={24}
-              color={theme.colors.text.primary}
-            />
-          </TouchableOpacity>
-          <Text style={{ color: theme.colors.text.primary }}>
-            {selectedNotes.length} selected
-          </Text>
-          <TouchableOpacity onPress={selectAllNotes}>
-            <Ionicons
-              name="checkmark-done"
-              size={24}
-              color={allNotesSelected ? "tomato" : theme.colors.text.primary}
-            />
-          </TouchableOpacity>
-        </TopBar>
-      )}
-
-      <FAB
-        small
-        icon="plus"
-        color="white"
-        onPress={() => {
-          navigation.navigate("EditNote", {
-            noteId: Date.now() + Math.floor(Math.random() * 1000),
-          });
-        }}
-        style={{
-          zIndex: 999,
-          position: "absolute",
-          margin: 25,
-          right: 0,
-          bottom: 0,
-          borderRadius: 1000,
-
-          backgroundColor: "tomato",
-        }}
-      />
-      <SearchContainer>
-        <Search />
-      </SearchContainer>
       <Container>
-        {isLoading ? (
-          <SafeArea>
-            <Loading animating={true} color="tomato" size={100} />
-          </SafeArea>
-        ) : (
-          <MasonryList
-            contentContainerStyle={{
-              paddingHorizontal: 10,
-              alignSelf: "stretch",
-            }}
-            numColumns={2}
-            data={notes}
-            key={gridKey}
-            showsVerticalScrollIndicator={false}
-            renderItem={({ item }) => (
-              <View style={{ padding: 4 }}>
-                <TouchableOpacity
-                  onLongPress={() => {
-                    if (!selectionMode) {
-                      toggleSelectionMode();
-                    }
-                    toggleNoteSelection(item.id);
-                  }}
-                  onPress={() => {
-                    if (selectionMode) {
-                      toggleNoteSelection(item.id);
-                    } else {
-                      navigation.navigate("EditNote", { noteId: item.id });
-                    }
-                  }}
-                >
-                  <View>
-                    {selectionMode && (
-                      <View style={styles.noteSelectedIcon}>
-                        <Ionicons
-                          name={
-                            selectedNotes.includes(item.id)
-                              ? "checkmark-circle"
-                              : "ellipse"
-                          }
-                          size={24}
-                          color={
-                            selectedNotes.includes(item.id) ? "orange" : "grey"
-                          }
-                          style={{ marginRight: 8 }}
-                        />
-                      </View>
-                    )}
-                    <NoteCard
-                      id={item.id}
-                      title={item.title}
-                      paragraph={item.content}
-                      date={formatDate(new Date(item.date))}
-                      onPress={() => {
-                        if (!selectionMode) {
-                          navigation.navigate("EditNote", { noteId: item.id });
-                        }
-                      }}
-                      keyword={keyword}
-                      selected={selectedNotes.includes(item.id)}
-                      ListEmptyComponent={
-                        <Text
-                          style={{
-                            textAlign: "center",
-                            marginTop: 20,
-                            color: theme.colors.text.primary,
-                          }}
-                        >
-                          No notes available
-                        </Text>
-                      }
-                    />
-                  </View>
-                </TouchableOpacity>
-              </View>
-            )}
-          />
-        )}
-
-        {selectionMode && (
-          <BottomBar>
-            <TouchableOpacity onPress={deleteSelectedNotes}>
-              <Ionicons
-                name="trash"
-                size={24}
-                color={theme.colors.text.secondary}
-              />
+        <Input
+          placeholder="Tiêu đề"
+          placeholderTextColor={theme.colors.text.disabled}
+          value={title}
+          onChangeText={setTitle}
+        />
+        <Input
+          placeholder="Nội dung"
+          placeholderTextColor={theme.colors.text.disabled}
+          value={content}
+          onChangeText={setContent}
+          multiline
+        />
+        {image ? (
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            <ImagePreview source={{ uri: `data:image/jpeg;base64,${image}` }} />
+            <TouchableOpacity onPress={() => setImage(null)}>
+              <Text style={{ color: "tomato" }}>Xóa ảnh</Text>
             </TouchableOpacity>
-          </BottomBar>
-        )}
+          </View>
+        ) : isConverting ? (
+          <Text style={{ color: "tomato", marginBottom: 8 }}>Đang chuyển đổi ảnh...</Text>
+        ) : null}
+        <TouchableOpacity
+          style={{
+            marginBottom: 12,
+            alignSelf: "flex-start",
+            backgroundColor: "#333",
+            paddingHorizontal: 16,
+            paddingVertical: 8,
+            borderRadius: 8,
+          }}
+          onPress={pickImage}
+        >
+          <Text style={{ color: "white" }}>Chọn ảnh</Text>
+        </TouchableOpacity>
+        {error ? (
+          <Text style={{ color: theme.colors.text.error, marginBottom: 8 }}>
+            {error}
+          </Text>
+        ) : null}
+        <SaveButton onPress={handleSave} disabled={isConverting}>
+          <SaveButtonText>
+            {isConverting ? "Đang chuyển đổi ảnh..." : "Lưu"}
+          </SaveButtonText>
+        </SaveButton>
+        <FlatList
+          data={notes}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <TouchableOpacity onPress={() => openEditModal(item)}>
+              <NoteItem style={{ flexDirection: "row", alignItems: "center" }}>
+                {item.image ? (
+                  <NoteItemImage source={{ uri: `data:image/jpeg;base64,${item.image}` }} />
+                ) : null}
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontWeight: "bold", color: theme.colors.text.primary }}>
+                    {item.title}
+                  </Text>
+                  <Text style={{ color: theme.colors.text.primary }}>{item.content}</Text>
+                  <Text style={{ color: theme.colors.text.disabled, fontSize: 12 }}>
+                    {item.createdAt ? new Date(item.createdAt).toLocaleString() : ""}
+                  </Text>
+                </View>
+              </NoteItem>
+            </TouchableOpacity>
+          )}
+          ListEmptyComponent={
+            <Text style={{ textAlign: "center", color: theme.colors.text.disabled }}>
+              Không có ghi chú nào
+            </Text>
+          }
+        />
+
+        <Modal
+          visible={editModalVisible}
+          animationType="slide"
+          transparent={true}
+          onRequestClose={() => setEditModalVisible(false)}
+        >
+          <View
+            style={{
+              flex: 1,
+              backgroundColor: "rgba(0,0,0,0.5)",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <View
+              style={{
+                width: "90%",
+                backgroundColor: theme.colors.bg.primary,
+                borderRadius: 12,
+                padding: 20,
+              }}
+            >
+              <Input
+                placeholder="Tiêu đề"
+                placeholderTextColor={theme.colors.text.disabled}
+                value={editTitle}
+                onChangeText={setEditTitle}
+              />
+              <Input
+                placeholder="Nội dung"
+                placeholderTextColor={theme.colors.text.disabled}
+                value={editContent}
+                onChangeText={setEditContent}
+                multiline
+              />
+              {editImage ? (
+                <View style={{ flexDirection: "row", alignItems: "center" }}>
+                  <ImagePreview source={{ uri: `data:image/jpeg;base64,${editImage}` }} />
+                  <TouchableOpacity onPress={() => setEditImage(null)}>
+                    <Text style={{ color: "tomato" }}>Xóa ảnh</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : editIsConverting ? (
+                <Text style={{ color: "tomato", marginBottom: 8 }}>Đang chuyển đổi ảnh...</Text>
+              ) : null}
+              <TouchableOpacity
+                style={{
+                  marginBottom: 12,
+                  alignSelf: "flex-start",
+                  backgroundColor: "#333",
+                  paddingHorizontal: 16,
+                  paddingVertical: 8,
+                  borderRadius: 8,
+                }}
+                onPress={pickEditImage}
+              >
+                <Text style={{ color: "white" }}>Chọn ảnh</Text>
+              </TouchableOpacity>
+              <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+                <SaveButton onPress={handleEditSave} style={{ flex: 1, marginRight: 8 }} disabled={editIsConverting}>
+                  <SaveButtonText>
+                    {editIsConverting ? "Đang chuyển đổi ảnh..." : "Lưu"}
+                  </SaveButtonText>
+                </SaveButton>
+                <SaveButton
+                  onPress={handleDelete}
+                  style={{ flex: 1, backgroundColor: "gray", marginLeft: 8 }}
+                >
+                  <SaveButtonText>Xoá</SaveButtonText>
+                </SaveButton>
+              </View>
+              <TouchableOpacity
+                style={{ marginTop: 12, alignItems: "center" }}
+                onPress={() => setEditModalVisible(false)}
+              >
+                <Text style={{ color: theme.colors.text.link || "tomato" }}>Đóng</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
       </Container>
     </SafeArea>
   );
 };
-
-const styles = StyleSheet.create({
-  gridView: {
-    flex: 1,
-  },
-  itemContainer: {
-    justifyContent: "flex-end",
-    borderRadius: 5,
-    padding: 10,
-    height: 150,
-  },
-  itemName: {
-    fontSize: 16,
-    color: "#fff",
-    fontWeight: "600",
-  },
-  itemCode: {
-    fontWeight: "600",
-    fontSize: 12,
-    color: "#fff",
-  },
-  sectionHeader: {
-    flex: 1,
-    fontSize: 15,
-    fontWeight: "600",
-    alignItems: "center",
-    backgroundColor: "#636e72",
-    color: "white",
-    padding: 10,
-  },
-  noteSelectedIcon: {
-    position: "absolute",
-    bottom: 8,
-    right: 8,
-    zIndex: 999,
-  },
-});
