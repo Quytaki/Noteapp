@@ -210,13 +210,16 @@ export const NotesScreen = () => {
   return (
     <SafeArea>
       <Container>
-        {/* Form nhập tiêu đề và nội dung */}
+        {/* ======================= FORM THÊM GHI CHÚ MỚI ======================= */}
+        {/* Ô nhập tiêu đề (TextInput) - trên cùng form */}
+        {/* Để sửa vị trí: di chuyển hoặc đổi style Input này */}
         <Input
           placeholder="Tiêu đề"
           placeholderTextColor={theme.colors.text.disabled}
           value={title}
           onChangeText={setTitle}
         />
+        {/* Ô nhập nội dung (TextInput) - dưới ô tiêu đề */}
         <Input
           placeholder="Nội dung"
           placeholderTextColor={theme.colors.text.disabled}
@@ -224,18 +227,21 @@ export const NotesScreen = () => {
           onChangeText={setContent}
           multiline
         />
-        {/* Hiển thị ảnh preview nếu có */}
+        {/* Ảnh preview (nếu có) - bên trái nút Xóa ảnh */}
         {image ? (
           <View style={{ flexDirection: "row", alignItems: "center" }}>
+            {/* Ảnh preview (Image) */}
             <ImagePreview source={{ uri: `data:image/jpeg;base64,${image}` }} />
+            {/* Nút Xóa ảnh (TouchableOpacity) - bên phải ảnh preview */}
             <TouchableOpacity onPress={() => setImage(null)}>
               <Text style={{ color: "tomato" }}>Xóa ảnh</Text>
             </TouchableOpacity>
           </View>
         ) : isConverting ? (
+          // Thông báo đang chuyển đổi ảnh (Text) - dưới ô nội dung
           <Text style={{ color: "tomato", marginBottom: 8 }}>Đang chuyển đổi ảnh...</Text>
         ) : null}
-        {/* Nút chọn ảnh */}
+        {/* Nút chọn ảnh (TouchableOpacity) - dưới ảnh preview hoặc dưới ô nội dung nếu chưa có ảnh */}
         <TouchableOpacity
           style={{
             marginBottom: 12,
@@ -249,33 +255,41 @@ export const NotesScreen = () => {
         >
           <Text style={{ color: "white" }}>Chọn ảnh</Text>
         </TouchableOpacity>
-        {/* Hiển thị lỗi nếu có */}
+        {/* Hiển thị lỗi (Text) - dưới nút chọn ảnh */}
         {error ? (
           <Text style={{ color: theme.colors.text.error, marginBottom: 8 }}>
             {error}
           </Text>
         ) : null}
-        {/* Nút lưu ghi chú */}
+        {/* Nút Lưu ghi chú (SaveButton) - dưới cùng form thêm mới */}
         <SaveButton onPress={handleSave} disabled={isConverting}>
           <SaveButtonText>
             {isConverting ? "Đang chuyển đổi ảnh..." : "Lưu"}
           </SaveButtonText>
         </SaveButton>
-        {/* Danh sách các ghi chú */}
+
+        {/* ======================= DANH SÁCH GHI CHÚ ======================= */}
+        {/* FlatList hiển thị danh sách ghi chú - dưới form thêm mới */}
         <FlatList
           data={notes}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
             <TouchableOpacity onPress={() => openEditModal(item)}>
+              {/* Mỗi ghi chú là 1 NoteItem (View) - hàng ngang */}
               <NoteItem style={{ flexDirection: "row", alignItems: "center" }}>
+                {/* Ảnh nhỏ bên trái (NoteItemImage) nếu có */}
                 {item.image ? (
                   <NoteItemImage source={{ uri: `data:image/jpeg;base64,${item.image}` }} />
                 ) : null}
+                {/* Nội dung ghi chú (View) - bên phải ảnh */}
                 <View style={{ flex: 1 }}>
+                  {/* Tiêu đề (Text) - dòng đầu */}
                   <Text style={{ fontWeight: "bold", color: theme.colors.text.primary }}>
                     {item.title}
                   </Text>
+                  {/* Nội dung (Text) - dòng dưới */}
                   <Text style={{ color: theme.colors.text.primary }}>{item.content}</Text>
+                  {/* Ngày tạo (Text) - dưới cùng, nhỏ */}
                   <Text style={{ color: theme.colors.text.disabled, fontSize: 12 }}>
                     {item.createdAt ? new Date(item.createdAt).toLocaleString() : ""}
                   </Text>
@@ -284,13 +298,14 @@ export const NotesScreen = () => {
             </TouchableOpacity>
           )}
           ListEmptyComponent={
+            // Thông báo khi không có ghi chú (Text) - giữa màn hình
             <Text style={{ textAlign: "center", color: theme.colors.text.disabled }}>
               Không có ghi chú nào
             </Text>
           }
         />
 
-        {/* Modal chỉnh sửa ghi chú */}
+        {/* ======================= MODAL CHỈNH SỬA GHI CHÚ ======================= */}
         <Modal
           visible={editModalVisible}
           animationType="slide"
@@ -313,13 +328,14 @@ export const NotesScreen = () => {
                 padding: 20,
               }}
             >
-              {/* Form chỉnh sửa tiêu đề và nội dung */}
+              {/* Ô nhập tiêu đề (Input) - trên cùng modal */}
               <Input
                 placeholder="Tiêu đề"
                 placeholderTextColor={theme.colors.text.disabled}
                 value={editTitle}
                 onChangeText={setEditTitle}
               />
+              {/* Ô nhập nội dung (Input) - dưới ô tiêu đề */}
               <Input
                 placeholder="Nội dung"
                 placeholderTextColor={theme.colors.text.disabled}
@@ -327,18 +343,20 @@ export const NotesScreen = () => {
                 onChangeText={setEditContent}
                 multiline
               />
-              {/* Hiển thị ảnh preview khi chỉnh sửa */}
+              {/* Ảnh preview khi chỉnh sửa (ImagePreview) - bên trái nút Xóa ảnh */}
               {editImage ? (
                 <View style={{ flexDirection: "row", alignItems: "center" }}>
                   <ImagePreview source={{ uri: `data:image/jpeg;base64,${editImage}` }} />
+                  {/* Nút Xóa ảnh (TouchableOpacity) - bên phải ảnh preview */}
                   <TouchableOpacity onPress={() => setEditImage(null)}>
                     <Text style={{ color: "tomato" }}>Xóa ảnh</Text>
                   </TouchableOpacity>
                 </View>
               ) : editIsConverting ? (
+                // Thông báo đang chuyển đổi ảnh (Text) - dưới ô nội dung
                 <Text style={{ color: "tomato", marginBottom: 8 }}>Đang chuyển đổi ảnh...</Text>
               ) : null}
-              {/* Nút chọn ảnh khi chỉnh sửa */}
+              {/* Nút chọn ảnh khi chỉnh sửa (TouchableOpacity) - dưới ảnh preview hoặc dưới ô nội dung nếu chưa có ảnh */}
               <TouchableOpacity
                 style={{
                   marginBottom: 12,
@@ -352,13 +370,15 @@ export const NotesScreen = () => {
               >
                 <Text style={{ color: "white" }}>Chọn ảnh</Text>
               </TouchableOpacity>
-              {/* Nút lưu và xoá ghi chú */}
+              {/* Hai nút: Lưu (bên trái), Xoá (bên phải) nằm cạnh nhau */}
               <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+                {/* Nút Lưu (SaveButton) - bên trái */}
                 <SaveButton onPress={handleEditSave} style={{ flex: 1, marginRight: 8 }} disabled={editIsConverting}>
                   <SaveButtonText>
                     {editIsConverting ? "Đang chuyển đổi ảnh..." : "Lưu"}
                   </SaveButtonText>
                 </SaveButton>
+                {/* Nút Xoá (SaveButton) - bên phải, màu xám */}
                 <SaveButton
                   onPress={handleDelete}
                   style={{ flex: 1, backgroundColor: "gray", marginLeft: 8 }}
@@ -366,7 +386,7 @@ export const NotesScreen = () => {
                   <SaveButtonText>Xoá</SaveButtonText>
                 </SaveButton>
               </View>
-              {/* Nút đóng modal */}
+              {/* Nút Đóng modal (TouchableOpacity) - dưới cùng modal, căn giữa */}
               <TouchableOpacity
                 style={{ marginTop: 12, alignItems: "center" }}
                 onPress={() => setEditModalVisible(false)}
@@ -380,3 +400,9 @@ export const NotesScreen = () => {
     </SafeArea>
   );
 }
+// HƯỚNG DẪN SỬA VỊ TRÍ NÚT/LAYOUT (áp dụng cho toàn bộ app):
+// - Để đổi vị trí nút, di chuyển component TouchableOpacity tương ứng lên/xuống hoặc đổi style (flexDirection, alignItems, margin, ...).
+// - Để đổi vị trí các vùng (form thêm mới, danh sách, modal), thay đổi thứ tự hoặc style các View chứa chúng.
+// - Để căn chỉnh nút theo ý muốn, sửa style trong từng TouchableOpacity hoặc View cha.
+// - Để thêm nút mới, chỉ cần thêm một TouchableOpacity vào vị trí mong muốn trong layout.
+// - Để kiểm tra vị trí các nút, tìm comment "Nút ..." hoặc "Ô nhập ..." hoặc "Ảnh preview ..." trong code.

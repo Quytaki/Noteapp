@@ -7,6 +7,31 @@ import { signOut } from "firebase/auth";
 import { auth } from "../../../services/auth/firebase";
 import { ThemeContext } from "../../../infrastructure/theme/theme.context";
 
+// Mẫu layout màn hình cài đặt
+// Để sửa vị trí các nút, đổi style hoặc di chuyển các TouchableOpacity/Switch bên dưới
+
+/*
+export const SettingsScreen = () => {
+  return (
+    <SafeArea>
+      <View style={{ flex: 1, padding: 16 }}>
+        // Nút đổi theme (Switch hoặc Button)
+        // Nút chọn màu chủ đề (Button hoặc ColorPicker)
+        // Nút đăng xuất (Button)
+        // ... các nút khác nếu có ...
+      </View>
+    </SafeArea>
+  );
+};
+*/
+
+// HƯỚNG DẪN:
+// - Nút đổi theme: thường là Switch hoặc Button, đặt ở đầu màn hình settings.
+// - Nút chọn màu chủ đề: có thể là Button hoặc ColorPicker, đặt dưới nút đổi theme.
+// - Nút đăng xuất: Button, đặt cuối màn hình hoặc dưới cùng các tuỳ chọn.
+// - Để thêm/sửa vị trí các nút, chỉ cần thêm/bớt hoặc di chuyển các component tương ứng trong View.
+// - Để kiểm tra vị trí, tìm comment "Nút ..." trong code.
+
 const Container = styled.View`
   flex: 1;
   padding: 24px;

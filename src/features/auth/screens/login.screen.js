@@ -61,6 +61,7 @@ export const LoginScreen = ({ navigation }) => {
   return (
     <SafeArea>
       <Container>
+        {/* Ô nhập email (TextInput) - trên cùng */}
         <Input
           placeholder="Email"
           placeholderTextColor={theme.colors.text.disabled}
@@ -69,6 +70,7 @@ export const LoginScreen = ({ navigation }) => {
           keyboardType="email-address"
           autoCapitalize="none"
         />
+        {/* Ô nhập mật khẩu (TextInput) - dưới ô email */}
         <Input
           placeholder="Mật khẩu"
           placeholderTextColor={theme.colors.text.disabled}
@@ -76,14 +78,17 @@ export const LoginScreen = ({ navigation }) => {
           onChangeText={setPassword}
           secureTextEntry
         />
+        {/* Hiển thị lỗi (Text) - dưới ô mật khẩu */}
         {error ? (
           <Text style={{ color: theme.colors.text.error, marginBottom: 8 }}>
             {error}
           </Text>
         ) : null}
+        {/* Nút Đăng nhập (Button) - dưới cùng form */}
         <Button onPress={handleLogin} disabled={loading}>
           <ButtonText>{loading ? "Đang đăng nhập..." : "Đăng nhập"}</ButtonText>
         </Button>
+        {/* Nút chuyển sang màn hình đăng ký (TouchableOpacity) - dưới nút đăng nhập */}
         <TouchableOpacity
           style={{ marginTop: 16 }}
           onPress={() => navigation.navigate("Register")}
