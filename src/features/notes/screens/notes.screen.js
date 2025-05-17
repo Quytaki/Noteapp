@@ -1,4 +1,5 @@
 import React, { useContext, useState } from "react";
+// Import các component và hook cần thiết từ React Native và styled-components
 import { View, Text, TextInput, TouchableOpacity, FlatList, Modal, Alert, Image } from "react-native";
 import styled, { useTheme } from "styled-components/native";
 import * as ImagePicker from "expo-image-picker";
@@ -6,6 +7,7 @@ import { SafeArea } from "../../../components/utility/safe-area.component";
 import { NotesContext } from "../../../services/notes/notes.context";
 import uuid from "uuid-random";
 
+// Styled-components cho UI
 const Container = styled.View`
   flex: 1;
   padding: 16px;
@@ -60,6 +62,7 @@ const NoteItemImage = styled.Image`
   background-color: #222;
 `;
 
+// Hàm chuyển đổi uri ảnh sang base64 để lưu lên Realtime Database
 const getBase64FromUri = async (uri) => {
   return await new Promise((resolve, reject) => {
     import("expo-file-system").then(FileSystem => {
@@ -71,15 +74,18 @@ const getBase64FromUri = async (uri) => {
 };
 
 export const NotesScreen = () => {
+  // Lấy theme và context ghi chú
   const theme = useTheme();
   const { notes, addNote, updateNote, deleteNote } = useContext(NotesContext);
 
+  // State cho form thêm mới
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const [image, setImage] = useState(null);
+  const [image, setImage] = useState(null); // base64 string
   const [error, setError] = useState("");
-  const [isConverting, setIsConverting] = useState(false);
+  const [isConverting, setIsConverting] = useState(false); // trạng thái chuyển đổi ảnh
 
+  // State cho modal chỉnh sửa
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [editNoteId, setEditNoteId] = useState(null);
   const [editTitle, setEditTitle] = useState("");
@@ -87,6 +93,7 @@ export const NotesScreen = () => {
   const [editImage, setEditImage] = useState(null);
   const [editIsConverting, setEditIsConverting] = useState(false);
 
+  // Hàm chọn ảnh cho ghi chú mới
   const pickImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -99,6 +106,7 @@ export const NotesScreen = () => {
       setIsConverting(true);
       setImage(null);
       try {
+        // Chuyển ảnh sang base64
         const base64 = await getBase64FromUri(result.assets[0].uri);
         setImage(base64);
       } catch (e) {
@@ -109,6 +117,7 @@ export const NotesScreen = () => {
     }
   };
 
+  // Hàm chọn ảnh cho ghi chú khi chỉnh sửa
   const pickEditImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -131,6 +140,7 @@ export const NotesScreen = () => {
     }
   };
 
+  // Hàm lưu ghi chú mới lên Realtime Database
   const handleSave = async () => {
     if (isConverting) return;
     if (!title.trim() && !content.trim()) {
@@ -150,6 +160,7 @@ export const NotesScreen = () => {
     setImage(null);
   };
 
+  // Mở modal chỉnh sửa ghi chú
   const openEditModal = (note) => {
     setEditNoteId(note.id);
     setEditTitle(note.title);
@@ -158,6 +169,7 @@ export const NotesScreen = () => {
     setEditModalVisible(true);
   };
 
+  // Hàm lưu chỉnh sửa ghi chú lên Realtime Database
   const handleEditSave = async () => {
     if (editIsConverting) return;
     if (!editTitle.trim() && !editContent.trim()) {
@@ -174,6 +186,7 @@ export const NotesScreen = () => {
     setEditModalVisible(false);
   };
 
+  // Hàm xoá ghi chú khỏi Realtime Database
   const handleDelete = async () => {
     Alert.alert(
       "Xác nhận xoá",
@@ -193,9 +206,11 @@ export const NotesScreen = () => {
     );
   };
 
+  // Render UI
   return (
     <SafeArea>
       <Container>
+        {/* Form nhập tiêu đề và nội dung */}
         <Input
           placeholder="Tiêu đề"
           placeholderTextColor={theme.colors.text.disabled}
@@ -209,6 +224,7 @@ export const NotesScreen = () => {
           onChangeText={setContent}
           multiline
         />
+        {/* Hiển thị ảnh preview nếu có */}
         {image ? (
           <View style={{ flexDirection: "row", alignItems: "center" }}>
             <ImagePreview source={{ uri: `data:image/jpeg;base64,${image}` }} />
@@ -219,6 +235,7 @@ export const NotesScreen = () => {
         ) : isConverting ? (
           <Text style={{ color: "tomato", marginBottom: 8 }}>Đang chuyển đổi ảnh...</Text>
         ) : null}
+        {/* Nút chọn ảnh */}
         <TouchableOpacity
           style={{
             marginBottom: 12,
@@ -232,16 +249,19 @@ export const NotesScreen = () => {
         >
           <Text style={{ color: "white" }}>Chọn ảnh</Text>
         </TouchableOpacity>
+        {/* Hiển thị lỗi nếu có */}
         {error ? (
           <Text style={{ color: theme.colors.text.error, marginBottom: 8 }}>
             {error}
           </Text>
         ) : null}
+        {/* Nút lưu ghi chú */}
         <SaveButton onPress={handleSave} disabled={isConverting}>
           <SaveButtonText>
             {isConverting ? "Đang chuyển đổi ảnh..." : "Lưu"}
           </SaveButtonText>
         </SaveButton>
+        {/* Danh sách các ghi chú */}
         <FlatList
           data={notes}
           keyExtractor={(item) => item.id}
@@ -270,6 +290,7 @@ export const NotesScreen = () => {
           }
         />
 
+        {/* Modal chỉnh sửa ghi chú */}
         <Modal
           visible={editModalVisible}
           animationType="slide"
@@ -292,6 +313,7 @@ export const NotesScreen = () => {
                 padding: 20,
               }}
             >
+              {/* Form chỉnh sửa tiêu đề và nội dung */}
               <Input
                 placeholder="Tiêu đề"
                 placeholderTextColor={theme.colors.text.disabled}
@@ -305,6 +327,7 @@ export const NotesScreen = () => {
                 onChangeText={setEditContent}
                 multiline
               />
+              {/* Hiển thị ảnh preview khi chỉnh sửa */}
               {editImage ? (
                 <View style={{ flexDirection: "row", alignItems: "center" }}>
                   <ImagePreview source={{ uri: `data:image/jpeg;base64,${editImage}` }} />
@@ -315,6 +338,7 @@ export const NotesScreen = () => {
               ) : editIsConverting ? (
                 <Text style={{ color: "tomato", marginBottom: 8 }}>Đang chuyển đổi ảnh...</Text>
               ) : null}
+              {/* Nút chọn ảnh khi chỉnh sửa */}
               <TouchableOpacity
                 style={{
                   marginBottom: 12,
@@ -328,6 +352,7 @@ export const NotesScreen = () => {
               >
                 <Text style={{ color: "white" }}>Chọn ảnh</Text>
               </TouchableOpacity>
+              {/* Nút lưu và xoá ghi chú */}
               <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
                 <SaveButton onPress={handleEditSave} style={{ flex: 1, marginRight: 8 }} disabled={editIsConverting}>
                   <SaveButtonText>
@@ -341,6 +366,7 @@ export const NotesScreen = () => {
                   <SaveButtonText>Xoá</SaveButtonText>
                 </SaveButton>
               </View>
+              {/* Nút đóng modal */}
               <TouchableOpacity
                 style={{ marginTop: 12, alignItems: "center" }}
                 onPress={() => setEditModalVisible(false)}
@@ -353,4 +379,4 @@ export const NotesScreen = () => {
       </Container>
     </SafeArea>
   );
-};
+}

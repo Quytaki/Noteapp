@@ -1,6 +1,5 @@
 import React, { useContext, useState, useEffect } from "react";
 import { Text, View, TextInput, Keyboard } from "react-native";
-
 import styled from "styled-components/native";
 import { useTheme } from "styled-components";
 import { Spacer } from "../../../components/spacer/spacer.component";
@@ -8,6 +7,7 @@ import { NotesContext } from "../../../services/notes/notes.context";
 import { useIsFocused } from "@react-navigation/native";
 import { SafeArea } from "../../../components/utility/safe-area.component";
 
+// Styled-components cho UI
 const Container = styled.View`
   flex: 1;
   background-color: ${(props) => props.theme.colors.bg.primary};
@@ -32,6 +32,7 @@ const Loading = styled.ActivityIndicator`
 `;
 
 export const EditNoteScreen = ({ route, navigation }) => {
+  // Lấy các biến cần thiết từ navigation và context
   const isFocused = useIsFocused();
   const theme = useTheme();
   const { noteId } = route.params;
@@ -50,15 +51,18 @@ export const EditNoteScreen = ({ route, navigation }) => {
     isLoading,
   } = useContext(NotesContext);
 
+  // Undo/redo stack cho nội dung ghi chú
   const [contentUndoStack, setContentUndoStack] = useState([]);
   const [contentRedoStack, setContentRedoStack] = useState([]);
 
+  // Hàm cập nhật nội dung và lưu vào undo stack
   const updateContent = (text) => {
     setContentUndoStack([...contentUndoStack, content]);
     setContentRedoStack([]);
     setContent(text);
   };
 
+  // Undo nội dung
   const undoContent = () => {
     if (contentUndoStack.length > 0) {
       setContentRedoStack([...contentRedoStack, content]);
@@ -67,6 +71,7 @@ export const EditNoteScreen = ({ route, navigation }) => {
     }
   };
 
+  // Redo nội dung
   const redoContent = () => {
     if (contentRedoStack.length > 0) {
       setContentUndoStack([...contentUndoStack, content]);
@@ -75,6 +80,7 @@ export const EditNoteScreen = ({ route, navigation }) => {
     }
   };
 
+  // Cập nhật các hàm undo/redo cho navigation params để dùng ở header
   useEffect(() => {
     navigation.setParams({
       undoContent: undoContent,
@@ -84,7 +90,7 @@ export const EditNoteScreen = ({ route, navigation }) => {
     });
   }, [contentUndoStack, contentRedoStack]);
 
-  // Fetch note data from local storage or database using the noteId
+  // Hàm lấy dữ liệu ghi chú từ database (nếu có)
   const fetchNoteData = async () => {
     console.log("fetching note data ", id);
     const noteData = await getNote(id);
@@ -94,13 +100,14 @@ export const EditNoteScreen = ({ route, navigation }) => {
       setContent(noteData.content);
       console.log("date type: ", typeof new Date(Date.now()));
       setDate(new Date(noteData.date));
-
       setNewNote(false);
     } else {
       console.log("fetchNoteData null");
       setNewNote(true);
     }
   };
+
+  // Hàm lưu hoặc xoá ghi chú khi rời khỏi màn hình
   handleFinishEdit = () => {
     if (title == "" && content == "") {
       console.log("removing note");
@@ -120,10 +127,13 @@ export const EditNoteScreen = ({ route, navigation }) => {
       }
     }
   };
+
+  // Khi vào màn hình, load dữ liệu ghi chú
   useEffect(() => {
     fetchNoteData();
   }, [id]);
 
+  // Khi rời khỏi màn hình, tự động lưu hoặc xoá ghi chú
   useEffect(() => {
     if (!isFocused) {
       console.log("Navigated away from EditNoteScreen");
@@ -133,8 +143,8 @@ export const EditNoteScreen = ({ route, navigation }) => {
 
   useEffect(() => {
     console.log(date.getMonth() + 1);
-    //console.log(new Date(Date.now()).getMonth() + 1);
   }, [date]);
+
   return (
     <Container>
       <Spacer position="top" size="large"></Spacer>
@@ -144,6 +154,7 @@ export const EditNoteScreen = ({ route, navigation }) => {
         </SafeArea>
       ) : (
         <>
+          {/* Ô nhập tiêu đề */}
           <TitleContainer>
             <TextInput
               placeholder="Title"
@@ -157,6 +168,7 @@ export const EditNoteScreen = ({ route, navigation }) => {
               placeholderTextColor={theme.colors.text.secondary}
             />
           </TitleContainer>
+          {/* Ô nhập nội dung */}
           <NoteContainer>
             <TextInput
               placeholder="Write something..."
